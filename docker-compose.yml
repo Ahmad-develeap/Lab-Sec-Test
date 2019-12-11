@@ -1,0 +1,94 @@
+version: '3.4'
+services:
+#---------------------------------------------------------------
+  jira:
+    image: atlassian/jira-software:8.3
+    container_name: server-jira
+    restart: always
+    ports:
+      - "8080:8080" 
+    links:
+      - database
+    volumes:
+      - jira-data:/var/atlassian/jira
+    networks:
+      - confluencenet
+#---------------------------------------------------------------
+  confluence:
+    image: atlassian/confluence-server:6.13
+    container_name: server-confluence
+    restart: always
+    ports:
+      - "8090:8090"
+    links:
+      - database
+    volumes:
+      - confluence-data:/var/atlassian/confluence
+    networks:
+      - confluencenet
+#---------------------------------------------------------------
+  bitbucket:
+    image: atlassian/bitbucket-server:6.0
+    container_name: server-bitbucket
+    restart: always
+    ports:
+      - "7990:7990"
+    links:
+      - database
+    volumes:
+      - bitbucket-data:/var/atlassian/application-data/bitbucket
+    networks:
+      - confluencenet
+#---------------------------------------------------------------
+  database:
+    image: postgres:12.0
+    container_name: database-postgres
+    restart: always
+    volumes:
+      - database-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRESQL_DATABASE=data-jira
+      - POSTGRESQL_USERNAME=atlassian
+      - POSTGREQSL_PASSWORD=supersecret
+    networks:
+      - confluencenet
+#---------------------------------------------------------------
+  nginx:
+    image: nginx:1.17
+    container_name: server-nginx
+    restart: always
+    ports:
+      - "80:80"
+    links:
+      - jira
+      - confluence
+      - bitbucket
+    volumes:
+    - ./:/src
+    command: ./src/scripts/run_nginx.sh
+    environment:
+    - DOMAIN
+    networks:
+      - confluencenet
+#---------------------------------------------------------------
+  jenkins:
+    image: jenkins/jenkins
+    ports:
+      - "8113:8080"
+      - "50000:50000"
+    hostname: server-jenkins
+    volumes:
+      - ./jenkins-data:/var/jenkins_home
+    networks:
+       - confluencenet
+#---------------------------------------------------------------
+volumes:
+  jira-data:
+  confluence-data:
+  bitbucket-data:
+  database-data:
+  jenkins-data:
+
+networks:
+  confluencenet:
+    driver: bridge
