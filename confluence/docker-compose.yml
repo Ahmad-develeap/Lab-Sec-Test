@@ -1,0 +1,40 @@
+version: '3.4'
+services:
+
+
+
+ confluence:
+    image: atlassian/confluence-server:6.13
+    container_name: server-confluence
+    restart: always
+    ports:
+      - "8090:8090"
+    links:
+      - database
+    volumes:
+      - confluence-data:/var/atlassian/confluence
+    networks:
+      - confluencenet
+
+
+ database:
+    image: postgres:12.0
+    container_name: database-postgres
+    restart: always
+    volumes:
+      - database-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=atlassian_confluence
+      - POSTGRES_PASSWORD=supersecret
+      - POSTGRES_DB=confluencedb
+    networks:
+      - confluencenet
+
+
+volumes:
+  confluence-data:
+  database-data:
+
+networks:
+  confluencenet:
+    driver: bridge

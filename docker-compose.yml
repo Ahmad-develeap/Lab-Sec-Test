@@ -5,60 +5,61 @@ services:
     image: atlassian/jira-software:8.3
     container_name: server-jira
     restart: always
-    ports:
-      - "8080:8080" 
+#    ports:
+#      - "8080:8080" 
     links:
-      - database
+      - postgres
     volumes:
       - jira-data:/var/atlassian/jira
     networks:
-      - confluencenet
+      - net
 #---------------------------------------------------------------
   confluence:
     image: atlassian/confluence-server:6.13
     container_name: server-confluence
     restart: always
-    ports:
-      - "8090:8090"
+#    ports:
+#      - "8090:8090"
     links:
-      - database
+      - postgres
     volumes:
-      - confluence-data:/var/atlassian/confluence
+      - confluence-data2:/var/atlassian/confluence
     networks:
-      - confluencenet
+      - net
 #---------------------------------------------------------------
   bitbucket:
     image: atlassian/bitbucket-server:6.0
     container_name: server-bitbucket
     restart: always
-    ports:
-      - "7990:7990"
+#    ports:
+#      - "7990:7990"
     links:
-      - database
+      - postgres
     volumes:
       - bitbucket-data:/var/atlassian/application-data/bitbucket
     networks:
-      - confluencenet
+      - net
 #---------------------------------------------------------------
-  database:
+  postgres:
     image: postgres:12.0
-    container_name: database-postgres
+    container_name: postgres-postgres
     restart: always
     volumes:
-      - database-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     environment:
-      - POSTGRESQL_DATABASE=data-jira
-      - POSTGRESQL_USERNAME=atlassian
-      - POSTGREQSL_PASSWORD=supersecret
+      - POSTGRES_USER=atlassian_confluence
+      - POSTGRES_PASSWORD=1f2e63a4463811bebfdf7adf2230b740
+      - POSTGRES_DB=confluencedb
     networks:
-      - confluencenet
+      - net
 #---------------------------------------------------------------
   nginx:
     image: nginx:1.17
     container_name: server-nginx
     restart: always
     ports:
-      - "80:80"
+      - 80:80
+      - 433:433
     links:
       - jira
       - confluence
@@ -69,26 +70,26 @@ services:
     environment:
     - DOMAIN
     networks:
-      - confluencenet
+      - net
 #---------------------------------------------------------------
-  jenkins:
-    image: jenkins/jenkins
-    ports:
-      - "8113:8080"
-      - "50000:50000"
-    hostname: server-jenkins
-    volumes:
-      - ./jenkins-data:/var/jenkins_home
-    networks:
-       - confluencenet
+#  jenkins:
+#    image: jenkins/jenkins
+#    ports:
+#      - "8113:8080"
+#      - "50000:50000"
+#    hostname: server-jenkins
+#    volumes:
+#      - ./jenkins-data:/var/jenkins_home
+#    networks:
+#       - net
 #---------------------------------------------------------------
 volumes:
   jira-data:
-  confluence-data:
+  confluence-data2:
   bitbucket-data:
-  database-data:
+  postgres-data:
   jenkins-data:
 
 networks:
-  confluencenet:
+  net:
     driver: bridge
